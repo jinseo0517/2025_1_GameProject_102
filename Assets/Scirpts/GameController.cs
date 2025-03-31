@@ -6,6 +6,7 @@ public class GameController : MonoBehaviour
 {
     public float Timer = 1.0f;                  //타이머 변수를 선언한다. (float)
     public GameObject EnemyObject;              //적 오브젝트를 선언한다. (GameObject)
+
     void Update()
     {
         Timer -= Time.deltaTime;             //시간을 매 프레이마다 감소 시킨다 (deltaTime 프레임 간격의 시간을 의미)
