@@ -50,14 +50,14 @@ public class PlayerMovement : MonoBehaviour
     void OnTriggerEnter(Collider other)  //트리거 영역 안에 들어왔다를 암시하는 함수
     {
         //코인수집
-        if(other.CompareTag("Coin"))
+        if(other.CompareTag("Coin"))        //코인 트리거와 충돌 하면
         {
-            coinCount++;
-            Destroy(other.gameObject);
-            Debug.Log($"코인 수집 : {coinCount}/{totalCoins}");
+            coinCount++;                    //코인 변수 1 증가 시킨다. ++은 1을 증가 시킨다는 축약
+            Destroy(other.gameObject);      //코인 오브젝트를 제거한다.
+            Debug.Log($"코인 수집 : {coinCount}/{totalCoins}");     //수집한 코인 1/5 식으로 콘솔 로그에 표현한다.
         }
 
-        if (other.CompareTag("Door") && coinCount >= totalCoins)
+        if (other.CompareTag("Door") && coinCount >= totalCoins)        //코인 전체 카운트보다 코인을 더 수집 했을 경우
         {
             Debug.Log("게임 클리어");
             //이후 완료 연출 및 Scene 전환 한다.
