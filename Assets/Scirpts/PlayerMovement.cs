@@ -4,10 +4,30 @@ using UnityEngine;
 
 public class PlayerMovement : MonoBehaviour
 {
+    [Header("기본 이동 설정")]
     public float moveSpeed = 5.0f;  //이동 속도 변수 설정
-    public float jumpForce = 5.0f;  //점프의 침값을 바꿔준다
+    public float jumpForce = 7.0f;  //점프의 침값을 바꿔준다
+    public float turnSpeed = 10f;   //회전 속도
 
-    public bool isGrounded = true;  //방에 있는지 체크 하는 변수 (true/false)
+
+    [Header("점프 개선 설정")]
+    public float fallMultiplier = 2.5f;     //하강 중력 배율
+    public float lowJumpMultiplier = 2.0f;      //짧은 점프 배율
+
+    [Header("지면 감지 설정")]
+    public float coyoteTime = 0.15f;        //지면 관성 시간
+    public float coyoteTimeCounter;         //관성 타이머
+    public bool realGrouned = true;         //실제 지면 상태
+
+    [Header("글라이더 설정")]
+    public GameObject gliderObject;     //글라이더 오브젝트
+    public float gliderFallSpeed = 1.0f;    //글라이더 낙하 속도
+    public float gliderMoveSpeed = 7.0f;    //글라이더 이동 속도
+    public float gliderMaxTime = 5.0f;      //최대 사용 시간
+    public float gliderTimeLeft;            //남은 사용 시간
+    public bool isGliding = false;          //글라이딩 중인지 여부
+
+    public bool isGrounded = true;  //땅에 있는지 체크 하는 변수 (true/false)
 
     public int coinCount = 0;  //코인 획득 변수 선언
     public int totalCoins = 5;  //총 코인 획득 필요 변수선언
@@ -17,33 +37,121 @@ public class PlayerMovement : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        
+        //글라이더 오브젝트 초기화
+        if (gliderObject != null)
+        {
+            gliderObject.SetActive(false);      //시작시 비활성화
+        }
+
+        gliderTimeLeft = gliderMaxTime;         //글라이더 시간 초기화
+
+        coyoteTimeCounter = 0;                  //관성 타이머 초기화
     }
 
     // Update is called once per frame
     void Update()
     {
+        //지면 감지 활성화
+        UpdateGroundedState();
+
+
         //움직임 입력
         float moveHorizontal = Input.GetAxis("Horizontal");
         float moveVertical = Input.GetAxis("Vertical");
 
-        //속도값으로 직접이동
-        rb.velocity = new Vector3(moveHorizontal * moveSpeed, rb.velocity.y, moveVertical * moveSpeed);
+        //이동 방향 백터
+        Vector3 movement = new Vector3(moveHorizontal, 0, moveVertical);        //이동방향 감지
+
+        if(movement.magnitude > 0.1f)       //입력이 있을떄 회전
+        {
+            Quaternion targetRotation = Quaternion.LookRotation(movement);      //이동 방향을 바라보도록 회전
+            transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, turnSpeed * Time.deltaTime);
+        }
+
+        //G키로 글라이더 제어 (누르는 동안만 활성화)
+        if(Input.GetKey(KeyCode.G) && !isGrounded && gliderTimeLeft > 0) //G키를 누르면서, 땅에 닿아있지않고, 글라이더 남은시간이 있을때(3가지조건)
+        {
+            if(!isGliding)
+            {
+                //글라이더 활성화 함수(아래정의)
+                EnableGlider();
+            }
+
+            gliderTimeLeft -= Time.deltaTime;       //글라이더 사용 시간 감소
+
+            if(gliderTimeLeft <= 0)                 //글라이더 시간이 다되면 비활성화
+            {
+                //글라이더 비활성화 함수(아래정의)
+                DisableGlider();
+            }
+        }
+        else if (isGliding)
+        {
+            //G키를 때면 글라이더 비활성화
+            DisableGlider();
+        }
+
+        if(isGliding)       //움직임 처리
+        {
+            ApplyGliderMovement(moveHorizontal, moveVertical);      //글라이더 사용중 이동
+        }
+        else//기존 움직임 코드들을 else문 안에 넣는다.
+        {
+            //속도값으로 직접이동
+            rb.velocity = new Vector3(moveHorizontal * moveSpeed, rb.velocity.y, moveVertical * moveSpeed);
+
+            //착지 점프 높이 구현
+            if (rb.velocity.y < 0)       //하강 시에
+            {
+                rb.velocity += Vector3.up * Physics.gravity.y * (fallMultiplier - 1) * Time.deltaTime;      //하강시 중력 강화
+            }
+            else if (rb.velocity.y > 0 && !Input.GetButton("Jump"))      //상승중 점프 버튼을 때면 낮게 점프
+            {
+                rb.velocity += Vector3.up * Physics.gravity.y * (lowJumpMultiplier - 1) * Time.deltaTime;
+            }
+        }
+
+        //지면에 있으면 글라이더 시간 회복 및 글라이더 비활성화
+        if(isGrounded)
+        {
+            if(isGliding)
+            {
+                DisableGlider();
+            }
+
+            gliderTimeLeft = gliderMaxTime;     //지상에 있을 떄 시간회복
+        }
 
         //점프입력
         if(Input.GetButtonDown("Jump") && isGrounded)  //&& 두 값이 True 일때-> (Jump 버튼 {보통 스페이스바} 와 땅 위에 있을때
         {
             rb.AddForce(Vector3.up * jumpForce, ForceMode. Impulse);  //위쪽으로 설정한 힘만큼 
             isGrounded = false;  //점프를 하는순간 땅에서떨어졌기떄문에 False라고한다
-
+            realGrouned = false;
+            coyoteTimeCounter = 0;
         }
     }
-    void OnCollisionEnter(Collision collision) //충돌이 일어났을떄 호출되는 함수
-
+    void OnCollisionEnter(Collision collision) //충돌이 일어났을떄 호출되는함수
     {
-        if (collision.gameObject.tag == "Ground")  //충돌이 일어났을때 불체의 Tag가 Ground인 경우
+        if (collision.gameObject.tag == "Ground")  //충돌이 일어난 물체의 Tag가 Ground인 경우
         {
-            isGrounded = true;  //땅과 충돌했을떄 true로 변경해준다
+            realGrouned = true;  //땅과 충돌했을떄 true로 변경해준다
+        }
+    }
+
+    void  OnCollisionStay(Collision collision)
+    {
+        if (collision.gameObject.tag == "Ground")
+        {
+            realGrouned = true;
+        }
+    }
+
+    private void OnCollisionExit(Collision collision)
+    {
+        if (collision.gameObject.tag =="Ground")
+        {
+            realGrouned = false;
         }
     }
 
@@ -62,5 +170,51 @@ public class PlayerMovement : MonoBehaviour
             Debug.Log("게임 클리어");
             //이후 완료 연출 및 Scene 전환 한다.
         }
+    }
+
+    //지면 상태 업데이트 함수
+    void UpdateGroundedState()
+    {
+        //실제로 지면에는 없지만 코요테 타임 내에 있으면 여전히 지면으로 판단
+        if (realGrouned)
+        {
+            coyoteTimeCounter = coyoteTime;     //시간을 지속석으로 감소 시킨다
+            isGrounded = true;
+        }
+        else
+        {
+            isGrounded = false;     //타임이 끝나면 뻘쓰
+        }
+    }
+
+    void EnableGlider()        //글라이더 활성화 함수
+    {
+        isGliding = true;
+
+        if (gliderObject != null)        //글라이더 오브젝트 표시
+        {
+            gliderObject.SetActive(true);
+        }
+        rb.velocity = new Vector3(rb.velocity.x, -gliderFallSpeed, rb.velocity.z);     //하강 속도를 초기화
+    }
+
+    void DisableGlider()        //글라이더 비활성화 함수
+    {
+        isGliding = false;
+
+        if (gliderObject != null)       //글라이더 오브젝트 숨기기
+        {
+            gliderObject.SetActive(false);
+        }
+
+        rb.velocity = new Vector3(rb.velocity.x, 0, rb.velocity.z);     //즉시 낙하하도록 중력 적용
+    }
+
+    void ApplyGliderMovement(float horizontal, float vertical)      //글라이더 이동적용
+    {
+        //글라이더 효과 : 천천히 떨어지고 수평 방향으로 더 빠르게 이동
+        Vector3 gliderVelocity = new Vector3(horizontal * gliderMoveSpeed, -gliderFallSpeed, vertical * gliderMoveSpeed);
+
+        rb.velocity = gliderVelocity;
     }
 }
