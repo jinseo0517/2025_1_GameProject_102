@@ -4,47 +4,47 @@ using UnityEngine;
 
 public class Spawner : MonoBehaviour
 {
-    public GameObject coinPrefads;      //동전 프리팹을 선언 한다.
-    public GameObject MissildPrfabs;    //미사일 프리팹을 선언 한다.
+    public GameObject coinPrefads;
+    public GameObject MissildPrfabs;
 
     [Header("스폰 타이밍 설정")]
-    public float minSpawnlnterval = 0.5f;       //최소 생성 간격(초)
-    public float maxSpawnlnterval = 2 / 0f;     //최대 생성 간격(초)
+    public float minSpawnlnterval = 0.5f;
+    public float maxSpawnlnterval = 2 / 0f;
 
     [Header("동전 스폰 확률 설정:")]
     [Range(0, 100)]
-    public int coinSpawnChance = 50;        //50% 확률로 동전이 생성된다
+    public int coinSpawnChance = 50;
 
-    public float timer = 0.0f;      //타이머
-    public float nextSpawnTime;     //다음 생성 시간
+    public float timer = 0.0f;
+    public float nextSpawnTime;
 
     // Start is called before the first frame update
     void Start()
     {
-        SetNextSpawnTime();     //함수 호출
+        SetNextSpawnTime();
     }
 
     // Update is called once per frame
     void Update()
     {
-        timer += Time.deltaTime;        //시간이 0에서 점점 증가한다.
+        timer += Time.deltaTime;
 
-        if(timer >= nextSpawnTime)      //생성 시간이 되면 오브젝트를 생성 한다
+        if(timer >= nextSpawnTime)
         {
-            SpawnObject();      
-            timer = 0.0f;       //시간을 초기화 시켜준다
-            SetNextSpawnTime();     //다시 함수 호출
+            SpawnObject();
+            timer = 0.0f;
+            SetNextSpawnTime();
         }
     }
 
     void SetNextSpawnTime()
     {
-        nextSpawnTime = Random.Range(minSpawnlnterval, maxSpawnlnterval);       //최소-최대 사이의 랜덤한 시간 설정
+        nextSpawnTime = Random.Range(minSpawnlnterval, maxSpawnlnterval);
     }
 
     void SpawnObject()
     {
-        Transform spawnTransform = transform;       //스포너 오브젝트의 위치와 회전값을 가져온다. (지역 변수)
+        Transform spawnTransform = transform;
 
         //확률에 따라 동전또는미사일생성
         int randomValue = Random.Range(0, 100);

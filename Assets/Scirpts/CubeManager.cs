@@ -4,11 +4,11 @@ using UnityEngine;
 
 public class CubeManager : MonoBehaviour
 {
-
     public CubeGenerator[] generatedCubes = new CubeGenerator[5];
 
-    public float timer = 0.0f;
-    public float interval = 3.0f;
+    public float timer = 0f;
+    public float interval = 3f;
+
 
     // Start is called before the first frame update
     void Start()
@@ -20,10 +20,10 @@ public class CubeManager : MonoBehaviour
     void Update()
     {
         timer += Time.deltaTime;
-        if (timer >= interval)
+        if(timer >= interval)
         {
             RandomizeCubeActivation();
-            timer = 0.0f;
+            timer = 0f;
         }
     }
 
