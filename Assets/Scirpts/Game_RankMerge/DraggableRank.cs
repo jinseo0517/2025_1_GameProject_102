@@ -113,15 +113,17 @@ public class DraggableRank : MonoBehaviour
     {
         if(targetCell.currentRank == null || targetCell.currentRank.rankLevel !=rankLevel)
         {
-            ReturnToOriginalPosition();
+            ReturnToOriginalPosition();     //원래위치로 돌아가기
             return;
         }
 
         if (currentCell != null)
         {
-            currentCell.currentRank = null;
+            currentCell.currentRank = null;     //기존칸에서제거
         }
         //합치기 실행 MergeRanks 함수를 통해서 실행
+
+        gameManager.MergeRanks(this, targetCell.currentRank);
     }
     public Vector3 GetMouseWorldPosition()      //마우스 월드 좌표 구하기
     {

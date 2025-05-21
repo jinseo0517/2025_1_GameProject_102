@@ -53,7 +53,10 @@ public class GameManager : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        
+        if(Input.GetKeyDown(KeyCode.D))
+        {
+            SpawnNewRank();
+        }
     }
 
     public DraggableRank CreateRankInCell(GridCell cell, int level)
@@ -70,6 +73,8 @@ public class GameManager : MonoBehaviour
 
         DraggableRank rank = rankObj.AddComponent<DraggableRank>();
         rank.SetRankLevel(level);
+
+        cell.SetRank(rank);
 
         return rank;
     }
@@ -111,7 +116,7 @@ public class GameManager : MonoBehaviour
     {
         for (int x = 0; x < gridWidth; x++)                 //1. 먼저 위치가 포함된 칸 확인
         {
-            for(int y = 0; y < gridHeight y++)
+            for (int y = 0; y < gridHeight; y++)
             {
                 if (grid[x, y].ContainsPosition(position))
                 {
